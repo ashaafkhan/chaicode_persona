@@ -93,7 +93,7 @@ export default function ChatPage() {
     }
   };
 
-  const currentAvatar = persona === "hitesh" ? "/hitesh.webp" : "/piyush.webp";
+  const currentAvatar = persona === "hitesh" ? "/hitesh.webp" : "/piyush.png";
   const currentName = persona === "hitesh" ? "Hitesh Sir" : "Piyush Garg";
 
   return (
@@ -126,7 +126,7 @@ export default function ChatPage() {
             }`}
           >
             <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2 border-white/10">
-              <Image src="/hitesh.webp" alt="Hitesh Choudhary" fill className="object-cover" />
+              <Image src="/hitesh.webp" alt="Hitesh Choudhary" fill unoptimized className="object-cover" />
             </div>
             <div className="text-left hidden sm:block">
               <h3 className="font-bold text-white text-lg">Hitesh Choudhary</h3>
@@ -143,7 +143,7 @@ export default function ChatPage() {
             }`}
           >
             <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2 border-white/10 bg-black">
-              <Image src="/piyush.webp" alt="Piyush Garg" fill className="object-cover" />
+              <Image src="/piyush.png" alt="Piyush Garg" fill unoptimized className="object-cover" />
             </div>
             <div className="text-left hidden sm:block">
               <h3 className="font-bold text-white text-lg">Piyush Garg</h3>
@@ -160,7 +160,7 @@ export default function ChatPage() {
         <div className="h-14 border-b border-white/10 flex items-center justify-between px-6 bg-black/20">
           <div className="flex items-center gap-3">
             <div className="relative w-8 h-8 rounded-full overflow-hidden">
-              <Image src={currentAvatar} alt={currentName} fill className="object-cover" />
+              <Image src={currentAvatar} alt={currentName} fill unoptimized className="object-cover" />
             </div>
             <span className="font-medium text-white text-sm">Chatting with {currentName}</span>
           </div>
@@ -208,7 +208,7 @@ export default function ChatPage() {
                   {msg.role === "user" ? (
                     <User className="w-4 h-4 text-white" />
                   ) : (
-                    <Image src={currentAvatar} alt={currentName} fill className="object-cover" />
+                    <Image src={currentAvatar} alt={currentName} fill unoptimized className="object-cover" />
                   )}
                 </div>
                 
