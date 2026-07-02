@@ -38,7 +38,7 @@ export async function manageContextWindow(
   sessionId: string,
   groq: Groq,
   model: string,
-  maxHistoryLength = 10 // Turn threshold (approx 10 messages)
+  maxHistoryLength = 16 // Turn threshold (approx 8 turns)
 ): Promise<SessionData> {
   const session = sessionsStore.get(sessionId);
   if (!session) {
@@ -47,8 +47,8 @@ export async function manageContextWindow(
 
   // If history exceeds max history length, we summarize the oldest part
   if (session.history.length > maxHistoryLength) {
-    // Keep the last 4 messages (2 turns) as active context
-    const keepCount = 4;
+    // Keep the last 12 messages (6 turns) as active context
+    const keepCount = 12;
     const toSummarize = session.history.slice(0, session.history.length - keepCount);
     const toKeep = session.history.slice(session.history.length - keepCount);
 

@@ -2,10 +2,17 @@ import fs from "fs";
 import path from "path";
 import { ChatMessage } from "./contextWindow";
 
+const promptCache = new Map<string, string>();
+
 export function loadPromptFile(filename: string): string {
+  if (promptCache.has(filename)) {
+    return promptCache.get(filename)!;
+  }
   const filePath = path.join(process.cwd(), "personas", filename);
   try {
-    return fs.readFileSync(filePath, "utf-8");
+    const content = fs.readFileSync(filePath, "utf-8");
+    promptCache.set(filename, content);
+    return content;
   } catch (error) {
     console.error(`Error reading prompt file ${filename}:`, error);
     return "";
