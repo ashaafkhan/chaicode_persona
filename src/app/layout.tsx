@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
+const poppins = Poppins({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"], variable: "--font-poppins" });
 
 export const metadata: Metadata = {
   title: "ChaiCode Persona | Chat Demo",
@@ -16,7 +17,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.className} antialiased min-h-screen bg-black text-white selection:bg-amber-500/30`}>
+      <body className={`${inter.className} ${poppins.variable} antialiased min-h-screen bg-black text-white selection:bg-amber-500/30`}>
         <div className="fixed inset-0 z-[-1] bg-black">
           {/* Subtle Hexagonal or Gradient Background Pattern */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-900/10 via-black to-black"></div>

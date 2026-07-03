@@ -17,13 +17,30 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId, setSessionId] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Generate a simple session ID on mount
+  // Load messages from localStorage on mount and persona change
   useEffect(() => {
-    setSessionId(Math.random().toString(36).substring(7));
-  }, []);
+    const saved = localStorage.getItem(`chaicode-messages-${persona}`);
+    if (saved) {
+      try {
+        setMessages(JSON.parse(saved));
+      } catch (e) {
+        setMessages([]);
+      }
+    } else {
+      setMessages([]);
+    }
+  }, [persona]);
+
+  // Save messages to localStorage whenever they update
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem(`chaicode-messages-${persona}`, JSON.stringify(messages));
+    } else {
+      localStorage.removeItem(`chaicode-messages-${persona}`);
+    }
+  }, [messages, persona]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -34,10 +51,14 @@ export default function ChatPage() {
   }, [messages, isLoading]);
 
   const handleClearChat = () => {
-    if (confirm("Are you sure you want to clear the chat history?")) {
-      setMessages([]);
-      setSessionId(Math.random().toString(36).substring(7));
-    }
+    setMessages([]);
+    localStorage.removeItem(`chaicode-messages-${persona}`);
+  };
+
+  const handlePersonaSwitch = (newPersona: "hitesh" | "piyush") => {
+    if (newPersona === persona) return;
+    setPersona(newPersona);
+    // Messages will automatically reload via the useEffect when persona changes
   };
 
   const handleSubmit = async (e?: React.FormEvent, presetMsg?: string) => {
@@ -54,13 +75,15 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, { id: assistantId, role: "assistant", content: "" }]);
 
     try {
+      // Send the last 12 messages for context + the new message
+      const contextMessages = [...messages, userMessage].slice(-12);
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           persona,
-          sessionId,
-          message: messageText,
+          messages: contextMessages,
         }),
       });
 
@@ -97,76 +120,73 @@ export default function ChatPage() {
   const currentName = persona === "hitesh" ? "Hitesh Sir" : "Piyush Garg";
 
   return (
-    <div className="flex flex-col h-screen max-w-5xl mx-auto p-4 md:p-6">
+    <div className="flex flex-col h-screen max-w-5xl mx-auto p-3 md:p-4">
       
-      {/* Disclosure Banner */}
-      <div className="bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs md:text-sm py-2 px-4 rounded-xl flex items-center justify-center gap-2 mb-6 shadow-sm backdrop-blur-sm">
-        <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
-        <p className="text-center">
-          <strong>AI Persona Demo:</strong> This is an AI trained on public teaching styles. Not the real individuals. Unaffiliated and unendorsed.
-        </p>
-      </div>
 
-      {/* Header & Persona Switcher */}
-      <header className="mb-6 flex flex-col gap-6">
-        <div className="text-center">
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-amber-200 to-amber-600 bg-clip-text text-transparent">
-            ChaiCode Persona
-          </h1>
-          <p className="text-gray-400 mt-1 text-sm md:text-base">Chat with AI avatars of top tech educators.</p>
-        </div>
+      {/* Compact Header & Persona Switcher */}
+      <header className="mb-3 flex flex-col gap-3 shrink-0">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          {/* Title */}
+          <div className="text-center sm:text-left">
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-amber-200 to-amber-600 bg-clip-text text-transparent font-[family-name:var(--font-poppins)]">
+              ChaiCode Persona
+            </h1>
+            <p className="text-gray-400 mt-0.5 text-xs md:text-sm font-[family-name:var(--font-poppins)]">Chat with AI avatars of top tech educators.</p>
+          </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            onClick={() => setPersona("hitesh")}
-            className={`relative flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 border ${
-              persona === "hitesh"
-                ? "bg-amber-900/20 border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.15)] ring-1 ring-amber-500/50"
-                : "bg-white/5 border-white/10 hover:bg-white/10"
-            }`}
-          >
-            <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2 border-white/10">
-              <Image src="/hitesh.webp" alt="Hitesh Choudhary" fill unoptimized className="object-cover" />
-            </div>
-            <div className="text-left hidden sm:block">
-              <h3 className="font-bold text-white text-lg">Hitesh Choudhary</h3>
-              <p className="text-xs text-gray-400 line-clamp-1">Fundamentals & Analogies (Chai aur Code)</p>
-            </div>
-          </button>
+          {/* Persona Switcher - Compact Pills */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => handlePersonaSwitch("hitesh")}
+              className={`flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all duration-300 border ${
+                persona === "hitesh"
+                  ? "bg-amber-900/20 border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.15)] ring-1 ring-amber-500/50"
+                  : "bg-white/5 border-white/10 hover:bg-white/10"
+              }`}
+            >
+              <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-white/10">
+                <Image src="/hitesh.webp" alt="Hitesh Choudhary" fill unoptimized className="object-cover" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold text-white text-sm leading-tight">Hitesh Choudhary</h3>
+                <p className="text-[10px] text-gray-400 leading-tight">Chai aur Code</p>
+              </div>
+            </button>
 
-          <button
-            onClick={() => setPersona("piyush")}
-            className={`relative flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 border ${
-              persona === "piyush"
-                ? "bg-amber-900/20 border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.15)] ring-1 ring-amber-500/50"
-                : "bg-white/5 border-white/10 hover:bg-white/10"
-            }`}
-          >
-            <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2 border-white/10 bg-black">
-              <Image src="/piyush.png" alt="Piyush Garg" fill unoptimized className="object-cover" />
-            </div>
-            <div className="text-left hidden sm:block">
-              <h3 className="font-bold text-white text-lg">Piyush Garg</h3>
-              <p className="text-xs text-gray-400 line-clamp-1">Fast-paced Builder (piyushgargdev)</p>
-            </div>
-          </button>
+            <button
+              onClick={() => handlePersonaSwitch("piyush")}
+              className={`flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all duration-300 border ${
+                persona === "piyush"
+                  ? "bg-amber-900/20 border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.15)] ring-1 ring-amber-500/50"
+                  : "bg-white/5 border-white/10 hover:bg-white/10"
+              }`}
+            >
+              <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-white/10 bg-white">
+                <Image src="/piyush.png" alt="Piyush Garg" fill unoptimized className="object-cover" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold text-white text-sm leading-tight">Piyush Garg</h3>
+                <p className="text-[10px] text-gray-400 leading-tight">piyushgargdev</p>
+              </div>
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Chat Area */}
-      <div className="flex-1 overflow-hidden flex flex-col bg-white/5 border border-white/10 rounded-3xl backdrop-blur-md shadow-2xl">
+      <div className="flex-1 overflow-hidden flex flex-col bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md shadow-2xl min-h-0">
         
         {/* Chat Header */}
-        <div className="h-14 border-b border-white/10 flex items-center justify-between px-6 bg-black/20">
-          <div className="flex items-center gap-3">
-            <div className="relative w-8 h-8 rounded-full overflow-hidden">
+        <div className="h-12 border-b border-white/10 flex items-center justify-between px-4 bg-black/20 shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className={`relative w-7 h-7 rounded-full overflow-hidden ${persona === 'piyush' ? 'bg-white' : ''}`}>
               <Image src={currentAvatar} alt={currentName} fill unoptimized className="object-cover" />
             </div>
             <span className="font-medium text-white text-sm">Chatting with {currentName}</span>
           </div>
           <button
             onClick={handleClearChat}
-            className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+            className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
             title="Clear Chat"
           >
             <Trash2 className="w-4 h-4" />
@@ -174,7 +194,7 @@ export default function ChatPage() {
         </div>
 
         {/* Messages List */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 scroll-smooth">
+        <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-4 scroll-smooth">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center space-y-6 opacity-80">
               <Bot className="w-16 h-16 text-amber-500/50" />
@@ -204,7 +224,7 @@ export default function ChatPage() {
                 key={msg.id}
                 className={`flex gap-4 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden relative ${msg.role === "user" ? "bg-amber-600" : "bg-black border border-white/10"}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden relative ${msg.role === "user" ? "bg-amber-600" : persona === "piyush" ? "bg-white border border-white/10" : "bg-black border border-white/10"}`}>
                   {msg.role === "user" ? (
                     <User className="w-4 h-4 text-white" />
                   ) : (
